@@ -13,9 +13,8 @@ import SnapKit
 protocol ListViewDelegate: class {
     func minimize()
     func beginListEdit()
+    func updateTodoTotal(incrementBy: Int)
 }
-
-// TODO: Update at every minute to determine current datetime to display + what tasks are due today
 
 class HomeViewController: UIViewController {
 
@@ -32,9 +31,15 @@ class HomeViewController: UIViewController {
     private var scrollingIsDisabled = false
     private var firstLoad = true
     private var newTaskListButton: UIButton!
+    private var firstTimer: Timer!
+    private var secondTimer: Timer!
+    private var taskCount = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        startClock()
+        
         listScrollView.layer.masksToBounds = false
         listScrollView.showsHorizontalScrollIndicator = false
         listScrollView.isScrollEnabled = false
@@ -71,26 +76,57 @@ class HomeViewController: UIViewController {
         super.viewDidAppear(animated)
     }
     
-    private func buildLabels() {
+    private func setTimes() {
+        let dateComponents = Calendar.current.dateComponents([.minute, .hour], from: Date())
         let formatter = DateFormatter()
+        let hourText = dateComponents.hour! > 12 ? String(dateComponents.hour! - 12) : String(dateComponents.hour!)
+        let minuteText = dateComponents.minute! < 10 ?  "0" + String(dateComponents.minute!) : String(dateComponents.minute!)
         formatter.dateFormat = "MMMM d, YYYY"
         
-        dateLabel.font = getPrimaryFont(.bold, size: 12)
+        timeLabel.text = hourText + ":" + minuteText
         dateLabel.text = formatter.string(from: Date()).uppercased()
+        
+        let hour = dateComponents.hour!
+        switch (hour) {
+        case _ where hour > 3 && hour < 12:
+            greetingLabel.text = "Good morning."
+            break
+        case _ where hour > 11 && hour < 17:
+            greetingLabel.text = "Good afternoon."
+            break
+        default:
+            greetingLabel.text = "Good evening."
+        }
+    }
+    
+    private func startClock() {
+        let currentSeconds = Calendar.current.component(.second, from: Date())
+        let timeTillTopOfTheMinute = Double(60 - currentSeconds)
+        firstTimer = Timer.scheduledTimer(withTimeInterval: timeTillTopOfTheMinute, repeats: false, block: { _ in
+            self.setTimes()
+            self.secondTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true, block: { _ in
+                self.setTimes()
+            })
+        })
+    }
+    
+    private func buildLabels() {
+        dateLabel.font = getPrimaryFont(.bold, size: 12)
         dateLabel.textColor = .white
         
         timeLabel.font = getPrimaryFont(.medium, size: 34)
-        timeLabel.text = "3:15"
         timeLabel.textColor = .white
         
         greetingLabel.font = getPrimaryFont(.medium, size: 33)
-        greetingLabel.text = "Good morning."
         greetingLabel.textColor = .white
         
+        let realm = try! Realm()
+        taskCount = realm.objects(TaskList.self).flatMap({$0.activeTasks}).count
         subtitleLabel.font = getPrimaryFont(.regular, size: 15)
-        subtitleLabel.text = "You have 3 tasks to do today."
         subtitleLabel.textColor = .white
+        subtitleLabel.text = "You have " + String(taskCount) + " tasks to do."
         
+        setTimes()
         view.addSubviews([dateLabel, timeLabel, greetingLabel, subtitleLabel])
         setConstraints()
     }
@@ -133,7 +169,8 @@ class HomeViewController: UIViewController {
         
         let newTaskListButtonXPos = kBuffer + (kBuffer * CGFloat(childViewControllers.count)/2) + (CGFloat(childViewControllers.count) * MINIMIZED_LIST_WIDTH)
         if (newTaskListButton == nil) {
-            newTaskListButton = UIButton(frame: CGRect(x: newTaskListButtonXPos,                                                       y: listViewBaseYPos + 4,
+            newTaskListButton = UIButton(frame: CGRect(x: newTaskListButtonXPos,
+                                                       y: listViewBaseYPos + 4,
                                                        width: MINIMIZED_LIST_WIDTH,
                                                        height: MINIMIZED_LIST_HEIGHT - 4))
             newTaskListButton.backgroundColor = .clear
@@ -289,13 +326,18 @@ class HomeViewController: UIViewController {
 }
 
 extension HomeViewController: ListViewDelegate {
-    
+
     func minimize() {
         changeListSize(gestureDirection: .down, editing: false)
     }
     
     func beginListEdit() {
         presentCustomListView(newList: false)
+    }
+    
+    func updateTodoTotal(incrementBy: Int) {
+        taskCount += incrementBy
+        subtitleLabel.text = "You have " + String(taskCount) + " tasks to do."
     }
     
 }

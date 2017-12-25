@@ -553,10 +553,12 @@ extension ListViewController: TaskTableViewCellDelegate {
                 let task = taskList.activeTasks[indexPath.row]
                 taskList.activeTasks.remove(at: indexPath.row)
                 taskList.completedTasks.insert(task, at: 0)
+                delegate?.updateTodoTotal(incrementBy: -1)
             } else {
                 let task = taskList.completedTasks[indexPath.row]
                 taskList.completedTasks.remove(at: indexPath.row)
                 taskList.activeTasks.insert(task, at: 0)
+                delegate?.updateTodoTotal(incrementBy: 1)
             }
         }
         
