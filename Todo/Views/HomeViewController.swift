@@ -39,6 +39,9 @@ class HomeViewController: UIViewController {
         super.viewDidLoad()
         
         startClock()
+        listViewBaseYPos = UIScreen.main.bounds.height * 0.4
+        kBuffer = (view.bounds.width - MINIMIZED_LIST_WIDTH)/2
+        gradient.frame = view.bounds
         
         listScrollView.layer.masksToBounds = false
         listScrollView.showsHorizontalScrollIndicator = false
@@ -49,16 +52,19 @@ class HomeViewController: UIViewController {
         let scrollSwipeGestureLeft = UISwipeGestureRecognizer(target: self, action: #selector(handleScroll))
         scrollSwipeGestureLeft.direction = .left
         listScrollView.addGestureRecognizer(scrollSwipeGestureLeft)
-        listViewBaseYPos = UIScreen.main.bounds.height * 0.4
-        kBuffer = (view.bounds.width - MINIMIZED_LIST_WIDTH)/2
-        
-        gradient.frame = view.bounds
         
         addLists()
         buildLabels()
         view.bringSubview(toFront: listScrollView)
-        let colorScheme = colorSchemes[(childViewControllers[0] as! ListViewController).taskList.colorSchemeId]
-        gradient.colors = [colorScheme["secondary"]!.cgColor, colorScheme["primary"]!.cgColor]
+
+        // Set initial color scheme
+        if (childViewControllers.count == 0) {
+            gradient.colors = [UIColor.black.cgColor, UIColor.black.cgColor]
+        } else {
+            let colorScheme = colorSchemes[(childViewControllers[0] as! ListViewController).taskList.colorSchemeId]
+            gradient.colors = [colorScheme["secondary"]!.cgColor, colorScheme["primary"]!.cgColor]
+        }
+
         view.layer.insertSublayer(gradient, at: 0)
     }
     
