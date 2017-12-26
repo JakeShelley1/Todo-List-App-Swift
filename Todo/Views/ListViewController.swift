@@ -38,6 +38,7 @@ class ListViewController: UIViewController {
     lazy var iconImageView = UIImageView()
     lazy var tableView = UITableView(frame: CGRect(), style: .grouped)
     lazy var backImageView = UIImageView()
+    lazy var editTableImageView = UIImageView()
     lazy var addTaskButton = UIButton()
     lazy var addTaskButtonShadow = UIView()
     lazy var buttonGradient = CAGradientLayer()
@@ -97,12 +98,17 @@ class ListViewController: UIViewController {
                 self.addTaskButton.alpha = 1
                 self.addTaskButton.isUserInteractionEnabled = true
                 self.addTaskButtonShadow.alpha = 1
+                self.editTableImageView.alpha = 1
+                self.editTableImageView.isUserInteractionEnabled = true
             })
         }
     }
     
     func minimize() {
         guard state != .minimizing else { return }
+        
+        tableView.setEditing(false, animated: true)
+        editTableImageView.tintColor = .lightGray
         
         addTaskView.removeKeyboardObserver()
         state = .minimizing
@@ -135,6 +141,8 @@ class ListViewController: UIViewController {
             self.addTaskButton.alpha = 0
             self.addTaskButton.isUserInteractionEnabled = false
             self.addTaskButtonShadow.alpha = 0
+            self.editTableImageView.alpha = 0
+            self.editTableImageView.isUserInteractionEnabled = false
         })
     }
     
@@ -173,8 +181,15 @@ class ListViewController: UIViewController {
         backImageView.image = UIImage(named: "back")
         backImageView.alpha = 0
         backImageView.isUserInteractionEnabled = false
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(minimizeFromBackButton))
-        backImageView.addGestureRecognizer(tapGesture)
+        let backTapGesture = UITapGestureRecognizer(target: self, action: #selector(minimizeFromBackButton))
+        backImageView.addGestureRecognizer(backTapGesture)
+        
+        editTableImageView.image = UIImage(named: "updown")
+        editTableImageView.alpha = 0
+        editTableImageView.isUserInteractionEnabled = false
+        let editTapGesture = UITapGestureRecognizer(target: self, action: #selector(editTableButtonPress))
+        editTableImageView.addGestureRecognizer(editTapGesture)
+        editTableImageView.tintColor = .lightGray
         
         tableView.register(UINib(nibName: "TaskTableViewCell", bundle: nil), forCellReuseIdentifier: reuseIdentifier)
         tableView.alpha = 0
@@ -213,7 +228,7 @@ class ListViewController: UIViewController {
         addTaskView.delegate = self
         
         setProgress()
-        view.addSubviews([todosLabel, titleLabel, progressBar, progressLabel, iconView, tableView, backImageView, addTaskButtonShadow, addTaskButton, editButton])
+        view.addSubviews([todosLabel, titleLabel, progressBar, progressLabel, iconView, tableView, backImageView, editTableImageView, addTaskButtonShadow, addTaskButton, editButton])
         view.insertSubview(addTaskView, belowSubview: addTaskButtonShadow)
     }
 
@@ -290,6 +305,12 @@ class ListViewController: UIViewController {
             make.height.width.equalTo(20)
         }
         
+        editTableImageView.snp.makeConstraints { (make) in
+            make.top.equalTo(SAFE_BUFFER)
+            make.left.equalTo(self.view.frame.width - 35)
+            make.height.width.equalTo(20)
+        }
+        
         addTaskButton.snp.makeConstraints { (make) in
             make.height.equalTo(addTaskButtonHeight).priority(.required)
             make.width.equalTo(addTaskButtonHeight)
@@ -360,7 +381,7 @@ class ListViewController: UIViewController {
         
         tableView.reloadSections([0], with: .automatic)
         addTaskView.dismissKeyboard()
-        closeView()
+        closeAddTaskView()
         addTaskView.textView.text = ""
     }
     
@@ -373,6 +394,9 @@ class ListViewController: UIViewController {
             commitTask()
             return
         }
+        
+        tableView.setEditing(false, animated: true)
+        editTableImageView.tintColor = .lightGray
         
         addingTask = true
         UIView.animate(withDuration: 0.08, animations: {
@@ -398,6 +422,16 @@ class ListViewController: UIViewController {
     
     @objc func beginListEdit() {
         delegate?.beginListEdit()
+    }
+    
+    @objc func editTableButtonPress() {
+        if (tableView.isEditing) {
+            tableView.setEditing(false, animated: true)
+            editTableImageView.tintColor = .lightGray
+        } else {
+            tableView.setEditing(true, animated: true)
+            editTableImageView.tintColor = colorSchemes[taskList.colorSchemeId]["primary"]
+        }
     }
     
 }
@@ -447,6 +481,37 @@ extension ListViewController: UITableViewDataSource {
         return header
     }
     
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCellEditingStyle {
+        return .none
+    }
+    
+    func tableView(_ tableView: UITableView, shouldIndentWhileEditingRowAt indexPath: IndexPath) -> Bool {
+        return false
+    }
+    
+    func tableView(_ tableView: UITableView, targetIndexPathForMoveFromRowAt sourceIndexPath: IndexPath, toProposedIndexPath proposedDestinationIndexPath: IndexPath) -> IndexPath {
+        if (sourceIndexPath.section != proposedDestinationIndexPath.section) {
+            return sourceIndexPath
+        }
+        
+        return proposedDestinationIndexPath
+    }
+    
+    func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        let realm = try! Realm()
+        try! realm.write {
+            if (sourceIndexPath.section == 0) {
+                let movedTask = taskList.activeTasks[sourceIndexPath.row]
+                taskList.activeTasks.remove(at: sourceIndexPath.row)
+                taskList.activeTasks.insert(movedTask, at: sourceIndexPath.row)
+            } else {
+                let movedTask = taskList.completedTasks[sourceIndexPath.row]
+                taskList.completedTasks.remove(at: sourceIndexPath.row)
+                taskList.completedTasks.insert(movedTask, at: sourceIndexPath.row)
+            }
+        }
+    }
+    
 }
 
 extension ListViewController: UITableViewDelegate {
@@ -491,7 +556,7 @@ extension ListViewController: AddTaskViewDelegate {
         })
     }
     
-    func closeView() {
+    func closeAddTaskView() {
         UIView.animate(withDuration: SHORT_ANIMATION_DURATION) {
             self.addTaskView.alpha = 0
             self.addTaskView.snp.updateConstraints({ (make) in
@@ -531,6 +596,10 @@ extension ListViewController: TaskTableViewCellDelegate {
     
     func showDetail(for cell: TaskTableViewCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
+        
+        tableView.setEditing(false, animated: true)
+        editTableImageView.tintColor = .lightGray
+        
         let vc = TaskViewController()
         if (indexPath.section == 0) {
             vc.task = taskList.activeTasks[indexPath.row]
@@ -570,7 +639,7 @@ extension ListViewController: TaskTableViewCellDelegate {
 
 extension ListViewController: TaskViewControllerDelegate {
     
-    func dismissView() {
+    func dismissDetailView() {
         addTaskView.setKeyboardObserver()
         tableView.reloadSections([0, 1], with: .none)
     }

@@ -10,7 +10,7 @@ import UIKit
 
 protocol AddTaskViewDelegate: class {
     func updateButtonFrame(with keyboardHeight : CGFloat)
-    func closeView()
+    func closeAddTaskView()
 }
 
 class AddTaskView: UIView {
@@ -123,7 +123,7 @@ class AddTaskView: UIView {
     
     @objc func dismissKeyboard() {
         self.endEditing(true)
-        delegate?.closeView()
+        delegate?.closeAddTaskView()
     }
     
     required init?(coder aDecoder: NSCoder) {

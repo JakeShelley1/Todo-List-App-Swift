@@ -11,7 +11,7 @@ import SnapKit
 import RealmSwift
 
 protocol TaskViewControllerDelegate: class {
-    func dismissView()
+    func dismissDetailView()
 }
 
 class TaskViewController: UIViewController {
@@ -181,7 +181,7 @@ class TaskViewController: UIViewController {
     
     @objc func closeView() {
         NotificationCenter.default.removeObserver(self, name: .UIKeyboardWillShow, object: nil)
-        delegate?.dismissView()
+        delegate?.dismissDetailView()
         dismiss(animated: true, completion: nil)
     }
     
