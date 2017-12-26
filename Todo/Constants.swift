@@ -30,7 +30,7 @@ let colorSchemes: [[String: UIColor]] = [
 let iconImages: [UIImage] = [
     UIImage(named: "checklist")!,
     UIImage(named: "briefcase")!,
-    UIImage(named: "x")!,
-    UIImage(named: "briefcase")!,
-    UIImage(named: "briefcase")!,
+    UIImage(named: "person")!,
+    UIImage(named: "home")!,
+    UIImage(named: "light")!,
 ]
