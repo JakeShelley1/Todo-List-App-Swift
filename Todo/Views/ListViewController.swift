@@ -509,11 +509,11 @@ extension ListViewController: UITableViewDataSource {
             if (sourceIndexPath.section == 0) {
                 let movedTask = taskList.activeTasks[sourceIndexPath.row]
                 taskList.activeTasks.remove(at: sourceIndexPath.row)
-                taskList.activeTasks.insert(movedTask, at: sourceIndexPath.row)
+                taskList.activeTasks.insert(movedTask, at: destinationIndexPath.row)
             } else {
                 let movedTask = taskList.completedTasks[sourceIndexPath.row]
                 taskList.completedTasks.remove(at: sourceIndexPath.row)
-                taskList.completedTasks.insert(movedTask, at: sourceIndexPath.row)
+                taskList.completedTasks.insert(movedTask, at: destinationIndexPath.row)
             }
         }
     }
