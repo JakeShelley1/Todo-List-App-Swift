@@ -11,7 +11,7 @@ import SnapKit
 import RealmSwift
 
 protocol TaskViewControllerDelegate: class {
-    func dismissDetailView()
+    func dismissDetailView(deletedActiveTask: Bool)
 }
 
 class TaskViewController: UIViewController {
@@ -176,12 +176,17 @@ class TaskViewController: UIViewController {
             realm.delete(task)
         }
         
-        closeView()
+        closeView(deletedTask: true)
     }
     
-    @objc func closeView() {
+    @objc func closeView(deletedTask: Bool = false) {
         NotificationCenter.default.removeObserver(self, name: .UIKeyboardWillShow, object: nil)
-        delegate?.dismissDetailView()
+        if (!completed && deletedTask) {
+            delegate?.dismissDetailView(deletedActiveTask: true)
+        } else {
+            delegate?.dismissDetailView(deletedActiveTask: false)
+        }
+        
         dismiss(animated: true, completion: nil)
     }
     
@@ -260,7 +265,7 @@ extension TaskViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if (scrollView.contentOffset.y < -UIScreen.main.bounds.height*0.18 &&
             !keyboardIsShown) {
-            closeView()
+            closeView(deletedTask: false)
         }
     }
     

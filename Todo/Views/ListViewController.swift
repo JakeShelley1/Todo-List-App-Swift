@@ -282,7 +282,7 @@ class ListViewController: UIViewController {
         }
         
         iconImageView.snp.makeConstraints { (make) in
-            make.height.width.equalTo(18)
+            make.height.width.equalTo(25)
             make.center.equalTo(iconView)
         }
         
@@ -336,6 +336,10 @@ class ListViewController: UIViewController {
         return Float(numCompleted)/Float(total)
     }
     
+    private func setTodosLabel() {
+        todosLabel.text = String(taskList.activeTasks.count) + (taskList.activeTasks.count == 1 ? " Task" : " Tasks")
+    }
+    
     private func setProgress() {
         let percentComplete = calculatePercentageComplete(numCompleted: taskList.completedTasks.count, total: taskList.getTotalTasks())
         UIView.animate(withDuration: SHORT_ANIMATION_DURATION, delay: 0, options: .curveEaseIn, animations: {
@@ -353,7 +357,7 @@ class ListViewController: UIViewController {
         progressLabel.method = .easeIn
         progressLabel.animationDuration = SHORT_ANIMATION_DURATION
         progressLabel.count(from: fromValue, to: CGFloat(percentComplete * 100))
-        todosLabel.text = String(describing: taskList.activeTasks.count) + " Tasks"
+        setTodosLabel()
     }
     
     private func showAddTaskView() {
@@ -383,6 +387,8 @@ class ListViewController: UIViewController {
         addTaskView.dismissKeyboard()
         closeAddTaskView()
         addTaskView.textView.text = ""
+        delegate?.updateTodoTotal(incrementBy: 1)
+        setTodosLabel()
     }
     
     @objc func minimizeFromBackButton() {
@@ -603,10 +609,10 @@ extension ListViewController: TaskTableViewCellDelegate {
         let vc = TaskViewController()
         if (indexPath.section == 0) {
             vc.task = taskList.activeTasks[indexPath.row]
-            vc.completed = true
-        } else {
             vc.completed = false
+        } else {
             vc.task = taskList.completedTasks[indexPath.row]
+            vc.completed = true
         }
     
         addTaskView.removeKeyboardObserver()
@@ -639,8 +645,13 @@ extension ListViewController: TaskTableViewCellDelegate {
 
 extension ListViewController: TaskViewControllerDelegate {
     
-    func dismissDetailView() {
+    func dismissDetailView(deletedActiveTask: Bool) {
         addTaskView.setKeyboardObserver()
+        if (deletedActiveTask) {
+            delegate?.updateTodoTotal(incrementBy: -1)
+            setTodosLabel()
+        }
+        
         tableView.reloadSections([0, 1], with: .none)
     }
     
