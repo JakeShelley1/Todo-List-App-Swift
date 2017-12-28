@@ -12,7 +12,7 @@ import UIKit
 // Sizes
 let MINIMIZED_LIST_HEIGHT: CGFloat = 360
 let MINIMIZED_LIST_WIDTH: CGFloat = 286
-let SAFE_BUFFER: CGFloat = UIDevice().type == .simulator ? 55 : 30 // this might be failing...
+let SAFE_BUFFER: CGFloat = UIDevice().type == .iPhoneX ? 55 : 30
 
 // Duration
 let LONG_ANIMATION_DURATION: Double = 0.4
