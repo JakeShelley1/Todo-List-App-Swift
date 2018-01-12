@@ -289,7 +289,7 @@ class HomeViewController: UIViewController {
                 lvc.expand()
                 UIView.animate(withDuration: LONG_ANIMATION_DURATION, animations: {
                     var yPos: CGFloat = -20
-                    if (UIDevice().type == .simulator) {
+                    if (UIDevice().type == .iPhoneX) {
                         yPos = -45
                     }
                     
