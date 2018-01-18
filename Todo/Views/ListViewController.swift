@@ -20,6 +20,7 @@ enum ListViewState {
 
 class ListViewController: UIViewController {
     
+    private let impactNotifier = UIImpactFeedbackGenerator()
     private let kBuffer: CGFloat = 15
     private let addTaskButtonHeight: CGFloat = 50
     private let reuseIdentifier = "TaskCell"
@@ -383,6 +384,7 @@ class ListViewController: UIViewController {
             taskList.activeTasks.insert(task, at: 0)
         }
         
+        impactNotifier.impactOccurred()
         tableView.reloadSections([0], with: .automatic)
         addTaskView.dismissKeyboard()
         closeAddTaskView()
@@ -636,7 +638,8 @@ extension ListViewController: TaskTableViewCellDelegate {
                 delegate?.updateTodoTotal(incrementBy: 1)
             }
         }
-        
+
+        impactNotifier.impactOccurred()
         setProgress()
         tableView.reloadSections([0, 1], with: .none)
     }
@@ -650,6 +653,7 @@ extension ListViewController: TaskViewControllerDelegate {
         if (deletedActiveTask) {
             delegate?.updateTodoTotal(incrementBy: -1)
             setTodosLabel()
+            impactNotifier.impactOccurred()
         }
         
         tableView.reloadSections([0, 1], with: .none)

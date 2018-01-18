@@ -15,6 +15,7 @@ protocol CustomListViewDelegate: class {
 
 class CustomListViewController: UIViewController {
 
+    private let feedbackGenerator = UINotificationFeedbackGenerator()
     private let NUMBER_OF_CELLS = 5
     private let cellHeight: CGFloat = 50
     private let kBuffer: CGFloat = 15
@@ -176,6 +177,7 @@ class CustomListViewController: UIViewController {
                 realm.delete(self.taskList)
             }
             
+            self.feedbackGenerator.notificationOccurred(.success)
             self.closeView()
         }))
         
@@ -216,6 +218,7 @@ class CustomListViewController: UIViewController {
             }
         }
         
+        self.feedbackGenerator.notificationOccurred(.success)
         closeView()
     }
     

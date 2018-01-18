@@ -289,6 +289,7 @@ class HomeViewController: UIViewController {
                 lvc.expand()
                 UIView.animate(withDuration: LONG_ANIMATION_DURATION, animations: {
                     var yPos: CGFloat = -20
+                    // TODO - Find better way to determine if its an iPhoneX
                     if (UIDevice().type == .iPhoneX) {
                         yPos = -45
                     }
